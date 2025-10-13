@@ -11,8 +11,15 @@
     <groupId>org.example</groupId>
     <artifactId>Itulek</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>Itulek</name>
     <description>Itulek</description>
+    
+    <modules>
+        <module>supwork-eureka-server</module>
+        <module>supwork-api-gateway</module>
+        <module>supwork-user-service</module>
+    </modules>
     <url/>
     <licenses>
         <license/>
@@ -27,8 +34,22 @@
         <url/>
     </scm>
     <properties>
-        <java.version>25</java.version>
+        <java.version>17</java.version>
+        <spring-cloud.version>2024.0.0</spring-cloud.version>
     </properties>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>

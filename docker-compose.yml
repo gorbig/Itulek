@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: supwork-postgres
+    environment:
+      POSTGRES_DB: supworkdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - supwork-network
+
+  eureka-server:
+    build:
+      context: ./supwork-eureka-server
+      dockerfile: Dockerfile
+    container_name: supwork-eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - supwork-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ./supwork-api-gateway
+      dockerfile: Dockerfile
+    container_name: supwork-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - supwork-network
+
+  user-service:
+    build:
+      context: ./supwork-user-service
+      dockerfile: Dockerfile
+    container_name: supwork-user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - eureka-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/supworkdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - supwork-network
+
+volumes:
+  postgres_data:
+
+networks:
+  supwork-network:
+    driver: bridge
+
