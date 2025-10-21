@@ -1,6 +1,6 @@
-# SupWork Backend - Микросервисная архитектура
+# SupWork Backend
 
-Multi-module Spring Boot проект для платформы поиска мастеров SupWork.
+Микросервисная платформа для поиска мастеров на базе Spring Boot + Spring Cloud.
 
 ## Архитектура
 
@@ -49,101 +49,93 @@ Service Discovery сервер для регистрации микросерв�
 ## Технологический стек
 
 - **Java**: 17
-- **Spring Boot**: 3.5.6
+- **Spring Boot**: 3.4.0
 - **Spring Cloud**: 2024.0.0
+- **SpringDoc OpenAPI**: 2.8.13
 - **Database**: PostgreSQL
 - **Security**: Spring Security + JWT
 - **Service Discovery**: Netflix Eureka
 - **API Gateway**: Spring Cloud Gateway
 
-## Быстрый старт
+## 🚀 Быстрый старт (Docker Compose)
 
 ### Требования
+- Docker и Docker Compose
+- Maven 3.8+ (для сборки)
 
-- Java 17+
-- Maven 3.8+
-- PostgreSQL 13+
-- Docker (опционально)
-
-### Сборка проекта
+### Запуск ВСЕХ сервисов одной командой
 
 ```bash
-mvn clean install
-```
+# 1. Соберите проект
+mvn clean package -DskipTests
 
-### Запуск с Maven
-
-```bash
-# 1. Запустите Eureka Server
-mvn spring-boot:run -pl supwork-eureka-server
-
-# 2. Запустите API Gateway
-mvn spring-boot:run -pl supwork-api-gateway
-
-# 3. Создайте БД и запустите User Service
-createdb supworkdb
-mvn spring-boot:run -pl supwork-user-service
-```
-
-### Запуск с Docker Compose
-
-```bash
-# Соберите все модули
-mvn clean package
-
-# Запустите все сервисы
+# 2. Запустите все сервисы
 docker-compose up -d
 
-# Просмотр логов
+# 3. Просмотр логов
 docker-compose logs -f
 
-# Остановка
+# 4. Остановка всех сервисов
 docker-compose down
 ```
 
-## API Примеры
-
-### Регистрация пользователя
+### Запуск для разработки (локально)
 
 ```bash
-curl -X POST http://localhost:8080/user/users/register \
+# 1. Запустите только PostgreSQL
+docker-compose up -d postgres
+
+# 2. В отдельных терминалах:
+mvn spring-boot:run -pl supwork-eureka-server
+mvn spring-boot:run -pl supwork-api-gateway  
+mvn spring-boot:run -pl supwork-user-service
+```
+
+## 🧪 Тестирование API
+
+### Swagger UI (рекомендуется)
+
+Откройте в браузере: **http://localhost:8081/swagger-ui/index.html**
+
+1. Зарегистрируйте пользователя через `POST /users/register`
+2. Залогиньтесь через `POST /auth/login` и скопируйте токен
+3. Нажмите кнопку **🔓 Authorize** и вставьте: `Bearer ВАШ_ТОКЕН`
+4. Тестируйте защищенные endpoints
+
+### Быстрое тестирование через скрипт
+
+```bash
+./test-api.sh
+```
+
+### Примеры curl запросов
+
+**Регистрация:**
+```bash
+curl -X POST http://localhost:8081/users/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "tech@example.com",
-    "password": "password123",
+    "password": "pass123",
     "role": "TECHNICIAN",
     "skills": ["plumbing", "electrical"]
   }'
 ```
 
-### Логин
-
+**Логин:**
 ```bash
-curl -X POST http://localhost:8080/user/auth/login \
+curl -X POST http://localhost:8081/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "tech@example.com",
-    "password": "password123"
+    "password": "pass123"
   }'
 ```
 
-Ответ:
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
-  "tokenType": "Bearer",
-  "userId": 1,
-  "email": "tech@example.com",
-  "role": "TECHNICIAN"
-}
-```
-
-### Получение профиля
-
+**Профиль (с токеном):**
 ```bash
-curl -X GET http://localhost:8080/user/users/1/profile \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+curl -X GET http://localhost:8081/users/1/profile \
+  -H "Authorization: Bearer ВАШ_ТОКЕН"
 ```
 
 ## Конфигурация
@@ -208,9 +200,15 @@ Itulek/
 - Gateway: http://localhost:8080/actuator/health
 - User Service: http://localhost:8081/actuator/health
 
-### Eureka Dashboard
+### Полезные ссылки
 
-http://localhost:8761 - просмотр зарегистрированных сервисов
+| Сервис | URL | Описание |
+|--------|-----|----------|
+| 🔍 Eureka Dashboard | http://localhost:8761 | Зарегистрированные сервисы |
+| 📘 Swagger UI | http://localhost:8081/swagger-ui/index.html | API документация и тесты |
+| 🌐 API Gateway | http://localhost:8080 | Точка входа |
+| 💓 Health Check | http://localhost:8081/actuator/health | Проверка здоровья |
+| 🗄️ PostgreSQL | localhost:5433 | База данных |
 
 ## Тестирование
 

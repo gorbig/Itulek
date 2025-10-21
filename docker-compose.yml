@@ -1,20 +1,27 @@
 version: '3.8'
 
 services:
+  # База данных PostgreSQL
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: supwork-postgres
     environment:
       POSTGRES_DB: supworkdb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - supwork-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Eureka Server - Service Discovery
   eureka-server:
     build:
       context: ./supwork-eureka-server
@@ -25,11 +32,13 @@ services:
     networks:
       - supwork-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
+  # API Gateway
   api-gateway:
     build:
       context: ./supwork-api-gateway
@@ -38,13 +47,14 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      eureka-server:
-        condition: service_healthy
+      - eureka-server
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     networks:
       - supwork-network
+    restart: unless-stopped
 
+  # User Service - Auth & User Management
   user-service:
     build:
       context: ./supwork-user-service
@@ -62,6 +72,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     networks:
       - supwork-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
