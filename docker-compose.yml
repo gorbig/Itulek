@@ -74,6 +74,27 @@ services:
       - supwork-network
     restart: unless-stopped
 
+  # Gig Service - Order Management
+  gig-service:
+    build:
+      context: ./supwork-gig-service
+      dockerfile: Dockerfile
+    container_name: supwork-gig-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - eureka-server
+      - user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/supworkdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - supwork-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
 

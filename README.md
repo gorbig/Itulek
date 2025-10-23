@@ -33,7 +33,7 @@ Service Discovery сервер для регистрации микросерв�
 - **Port**: 8080
 - **Routes**:
   - `/user/**` → user-service
-  - `/gig/**` → gig-service (future)
+  - `/gig/**` → gig-service
   - `/search/**` → search-service (future)
 
 ### 3. supwork-user-service
@@ -46,12 +46,21 @@ Service Discovery сервер для регистрации микросерв�
   - Role-based access (TECHNICIAN/CLIENT)
   - BCrypt password hashing
 
+### 4. supwork-gig-service
+Микросервис управления заказами (gigs).
+
+- **Port**: 8082
+- **Features**:
+  - CRUD операции для заказов
+  - Назначение заказов мастерам
+  - Интеграция с user-service через Feign
+  - JWT аутентификация
+
 ## Технологический стек
 
 - **Java**: 17
-- **Spring Boot**: 3.4.0
+- **Spring Boot**: 3.5.6
 - **Spring Cloud**: 2024.0.0
-- **SpringDoc OpenAPI**: 2.8.13
 - **Database**: PostgreSQL
 - **Security**: Spring Security + JWT
 - **Service Discovery**: Netflix Eureka
@@ -89,6 +98,7 @@ docker-compose up -d postgres
 mvn spring-boot:run -pl supwork-eureka-server
 mvn spring-boot:run -pl supwork-api-gateway  
 mvn spring-boot:run -pl supwork-user-service
+mvn spring-boot:run -pl supwork-gig-service
 ```
 
 ## 🧪 Тестирование API
@@ -205,9 +215,11 @@ Itulek/
 | Сервис | URL | Описание |
 |--------|-----|----------|
 | 🔍 Eureka Dashboard | http://localhost:8761 | Зарегистрированные сервисы |
-| 📘 Swagger UI | http://localhost:8081/swagger-ui/index.html | API документация и тесты |
+| 📘 Swagger UI (User) | http://localhost:8081/swagger-ui/index.html | User Service API |
+| 📘 Swagger UI (Gig) | http://localhost:8082/swagger-ui.html | Gig Service API |
 | 🌐 API Gateway | http://localhost:8080 | Точка входа |
-| 💓 Health Check | http://localhost:8081/actuator/health | Проверка здоровья |
+| 💓 Health Check (User) | http://localhost:8081/actuator/health | Проверка здоровья User Service |
+| 💓 Health Check (Gig) | http://localhost:8082/actuator/health | Проверка здоровья Gig Service |
 | 🗄️ PostgreSQL | localhost:5433 | База данных |
 
 ## Тестирование
