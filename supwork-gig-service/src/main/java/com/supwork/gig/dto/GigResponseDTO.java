@@ -22,5 +22,8 @@ public class GigResponseDTO {
     private GigStatus status;
     private Long clientId;
     private Long technicianId;
+    private String technicianEmail; // Email of assigned technician
     private LocalDateTime createdAt;
+    private Boolean canRate; // Whether client can rate this gig
+    private Boolean isRated; // Whether this gig has been rated
 }

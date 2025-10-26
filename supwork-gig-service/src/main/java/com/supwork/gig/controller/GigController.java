@@ -1,7 +1,9 @@
 package com.supwork.gig.controller;
 
 import com.supwork.gig.dto.CreateGigRequest;
+import com.supwork.gig.dto.CreateRatingRequest;
 import com.supwork.gig.dto.GigResponseDTO;
+import com.supwork.gig.dto.RatingDTO;
 import com.supwork.gig.service.GigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -58,6 +62,72 @@ public class GigController {
         log.info("Fetching open gigs with pageable: {}", pageable);
         Page<GigResponseDTO> gigs = gigService.getAllOpenGigs(pageable);
         return ResponseEntity.ok(gigs);
+    }
+    
+    @GetMapping("/my-gigs")
+    @PreAuthorize("hasRole('CLIENT') or hasRole('TECHNICIAN')")
+    @Operation(summary = "Получение своих заказов", description = "Получение всех заказов пользователя (созданные или назначенные)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список заказов получен"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Нет доступа")
+    })
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Page<GigResponseDTO>> getMyGigs(Pageable pageable, Authentication authentication) {
+        Long userId = Long.valueOf(authentication.getName());
+        String role = authentication.getAuthorities().stream()
+                .findFirst()
+                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                .orElse("USER");
+        
+        log.info("Fetching gigs for user ID: {}, role: {}", userId, role);
+        Page<GigResponseDTO> gigs = gigService.getMyGigs(userId, role, pageable);
+        return ResponseEntity.ok(gigs);
+    }
+    
+    @PostMapping("/{id}/rate")
+    @PreAuthorize("hasRole('CLIENT')")
+    @Operation(summary = "Оценка заказа", description = "Оценка выполненного заказа клиентом")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Оценка успешно создана"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Нет доступа"),
+            @ApiResponse(responseCode = "404", description = "Заказ не найден")
+    })
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<RatingDTO> rateGig(@PathVariable Long id, @Valid @RequestBody CreateRatingRequest request, Authentication authentication) {
+        Long clientId = Long.valueOf(authentication.getName());
+        RatingDTO rating = gigService.createRating(id, clientId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(rating);
+    }
+    
+    @GetMapping("/ratings/my")
+    @PreAuthorize("hasRole('CLIENT') or hasRole('TECHNICIAN')")
+    @Operation(summary = "Получение оценок пользователя", description = "Получение всех оценок пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список оценок получен"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Нет доступа")
+    })
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<List<RatingDTO>> getMyRatings(Authentication authentication) {
+        Long userId = Long.valueOf(authentication.getName());
+        String role = authentication.getAuthorities().stream()
+                .findFirst()
+                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                .orElse("USER");
+        
+        List<RatingDTO> ratings;
+        if ("CLIENT".equalsIgnoreCase(role)) {
+            ratings = gigService.getClientRatings(userId);
+        } else if ("TECHNICIAN".equalsIgnoreCase(role)) {
+            ratings = gigService.getTechnicianRatings(userId);
+        } else {
+            throw new IllegalArgumentException("Invalid role: " + role);
+        }
+        
+        return ResponseEntity.ok(ratings);
     }
     
     @GetMapping("/{id}")

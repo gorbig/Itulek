@@ -50,5 +50,21 @@ public class UserController {
         return ResponseEntity.ok(profile);
     }
 
+    @PutMapping("/{id}/profile")
+    @PreAuthorize("hasRole('CLIENT') or hasRole('TECHNICIAN')")
+    @Operation(summary = "Обновление профиля пользователя", description = "Обновление профиля пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Профиль успешно обновлен"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Нет доступа"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<UserProfileDTO> updateProfile(@PathVariable Long id, @Valid @RequestBody UserProfileDTO updateRequest) {
+        UserProfileDTO updatedProfile = userService.updateProfile(id, updateRequest);
+        return ResponseEntity.ok(updatedProfile);
+    }
+
 }
 

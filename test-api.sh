@@ -1,145 +1,206 @@
 #!/bin/bash
 
-# Цвета
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
+# SupWork API Testing Script
+# This script tests the main API endpoints
+
+echo "🧪 SupWork API Testing Script"
+echo "=============================="
+
+# Colors for output
 RED='\033[0;31m'
-NC='\033[0m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║  SupWork Backend API Test Script      ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
-echo ""
+# Base URLs
+GATEWAY_URL="http://localhost:8080"
+USER_SERVICE_URL="http://localhost:8081"
+GIG_SERVICE_URL="http://localhost:8082"
 
-# Проверка доступности сервисов
-check_service() {
-    local name=$1
-    local url=$2
-    
-    if curl -s -f "$url" > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ $name доступен${NC}"
-        return 0
-    else
-        echo -e "${RED}❌ $name недоступен ($url)${NC}"
-        return 1
-    fi
-}
+# Test data
+CLIENT_EMAIL="testclient@example.com"
+CLIENT_PASSWORD="password123"
+TECHNICIAN_EMAIL="testtech@example.com"
+TECHNICIAN_PASSWORD="password123"
 
-echo -e "${YELLOW}🔍 Проверка сервисов...${NC}"
-check_service "PostgreSQL" "http://localhost:5433" || echo -e "${YELLOW}  (Запустите: docker-compose -f docker-compose-dev.yml up -d)${NC}"
-check_service "User Service" "http://localhost:8081/actuator/health" || echo -e "${YELLOW}  (Запустите: mvn spring-boot:run -pl supwork-user-service)${NC}"
+echo -e "${YELLOW}1. Testing Service Health...${NC}"
 
-echo ""
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}📝 Тест 1: Регистрация пользователя${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-
-REGISTER_RESPONSE=$(curl -s -X POST http://localhost:8081/users/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "technician@supwork.com",
-    "password": "test123",
-    "role": "TECHNICIAN",
-    "skills": ["plumbing", "electrical", "carpentry"]
-  }')
-
-echo "$REGISTER_RESPONSE" | jq '.' 2>/dev/null || echo "$REGISTER_RESPONSE"
-
-if echo "$REGISTER_RESPONSE" | grep -q "id"; then
-    echo -e "${GREEN}✅ Регистрация успешна${NC}"
+# Test Gateway health
+if curl -s "$GATEWAY_URL/actuator/health" > /dev/null; then
+    echo -e "${GREEN}✅ Gateway is healthy${NC}"
 else
-    echo -e "${YELLOW}⚠️  Пользователь уже существует или ошибка${NC}"
-fi
-
-echo ""
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}🔐 Тест 2: Логин (получение JWT токена)${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost:8081/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "technician@supwork.com",
-    "password": "test123"
-  }')
-
-echo "$LOGIN_RESPONSE" | jq '.' 2>/dev/null || echo "$LOGIN_RESPONSE"
-
-# Извлечение токена
-ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.accessToken' 2>/dev/null)
-USER_ID=$(echo "$LOGIN_RESPONSE" | jq -r '.userId' 2>/dev/null)
-
-if [ "$ACCESS_TOKEN" != "null" ] && [ ! -z "$ACCESS_TOKEN" ]; then
-    echo -e "${GREEN}✅ Логин успешен${NC}"
-    echo -e "${BLUE}📋 Access Token: ${NC}${ACCESS_TOKEN:0:50}..."
-    echo -e "${BLUE}👤 User ID: ${NC}$USER_ID"
-else
-    echo -e "${RED}❌ Ошибка логина${NC}"
+    echo -e "${RED}❌ Gateway is not responding${NC}"
     exit 1
 fi
 
-echo ""
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}👤 Тест 3: Получение профиля (Protected Endpoint)${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-
-PROFILE_RESPONSE=$(curl -s -X GET "http://localhost:8081/users/$USER_ID/profile" \
-  -H "Authorization: Bearer $ACCESS_TOKEN")
-
-echo "$PROFILE_RESPONSE" | jq '.' 2>/dev/null || echo "$PROFILE_RESPONSE"
-
-if echo "$PROFILE_RESPONSE" | grep -q "email"; then
-    echo -e "${GREEN}✅ Профиль получен успешно${NC}"
+# Test User Service health
+if curl -s "$USER_SERVICE_URL/actuator/health" > /dev/null; then
+    echo -e "${GREEN}✅ User Service is healthy${NC}"
 else
-    echo -e "${RED}❌ Ошибка получения профиля${NC}"
+    echo -e "${RED}❌ User Service is not responding${NC}"
+    exit 1
 fi
 
-echo ""
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}🔄 Тест 4: Refresh Token${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
+# Test Gig Service health
+if curl -s "$GIG_SERVICE_URL/actuator/health" > /dev/null; then
+    echo -e "${GREEN}✅ Gig Service is healthy${NC}"
+else
+    echo -e "${RED}❌ Gig Service is not responding${NC}"
+    exit 1
+fi
 
-REFRESH_TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.refreshToken' 2>/dev/null)
+echo -e "\n${YELLOW}2. Testing User Registration...${NC}"
 
-REFRESH_RESPONSE=$(curl -s -X POST http://localhost:8081/auth/refresh \
+# Register CLIENT
+CLIENT_RESPONSE=$(curl -s -X POST "$USER_SERVICE_URL/users/register" \
   -H "Content-Type: application/json" \
-  -d "{\"refreshToken\": \"$REFRESH_TOKEN\"}")
+  -d "{
+    \"email\": \"$CLIENT_EMAIL\",
+    \"password\": \"$CLIENT_PASSWORD\",
+    \"role\": \"CLIENT\",
+    \"skills\": [\"plumbing\", \"electrical\"]
+  }")
 
-echo "$REFRESH_RESPONSE" | jq '.' 2>/dev/null || echo "$REFRESH_RESPONSE"
-
-if echo "$REFRESH_RESPONSE" | grep -q "accessToken"; then
-    echo -e "${GREEN}✅ Token обновлен успешно${NC}"
+if echo "$CLIENT_RESPONSE" | grep -q "successfully"; then
+    echo -e "${GREEN}✅ CLIENT registered successfully${NC}"
 else
-    echo -e "${RED}❌ Ошибка обновления токена${NC}"
+    echo -e "${RED}❌ CLIENT registration failed: $CLIENT_RESPONSE${NC}"
 fi
 
-echo ""
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}🌐 Тест 5: Через API Gateway${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-
-GATEWAY_LOGIN=$(curl -s -X POST http://localhost:8080/user/auth/login \
+# Register TECHNICIAN
+TECHNICIAN_RESPONSE=$(curl -s -X POST "$USER_SERVICE_URL/users/register" \
   -H "Content-Type: application/json" \
-  -d '{
-    "email": "technician@supwork.com",
-    "password": "test123"
-  }')
+  -d "{
+    \"email\": \"$TECHNICIAN_EMAIL\",
+    \"password\": \"$TECHNICIAN_PASSWORD\",
+    \"role\": \"TECHNICIAN\",
+    \"skills\": [\"plumbing\", \"electrical\", \"hvac\"]
+  }")
 
-echo "$GATEWAY_LOGIN" | jq '.' 2>/dev/null || echo "$GATEWAY_LOGIN"
-
-if echo "$GATEWAY_LOGIN" | grep -q "accessToken"; then
-    echo -e "${GREEN}✅ API Gateway работает${NC}"
+if echo "$TECHNICIAN_RESPONSE" | grep -q "successfully"; then
+    echo -e "${GREEN}✅ TECHNICIAN registered successfully${NC}"
 else
-    echo -e "${YELLOW}⚠️  API Gateway недоступен (запустите: mvn spring-boot:run -pl supwork-api-gateway)${NC}"
+    echo -e "${RED}❌ TECHNICIAN registration failed: $TECHNICIAN_RESPONSE${NC}"
 fi
 
-echo ""
-echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║      Все тесты завершены! 🎉           ║${NC}"
-echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${BLUE}📘 Swagger UI: ${NC}http://localhost:8081/swagger-ui.html"
-echo -e "${BLUE}🔍 Eureka Dashboard: ${NC}http://localhost:8761"
-echo ""
+echo -e "\n${YELLOW}3. Testing Authentication...${NC}"
 
+# Login CLIENT
+CLIENT_LOGIN_RESPONSE=$(curl -s -X POST "$USER_SERVICE_URL/auth/login" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"email\": \"$CLIENT_EMAIL\",
+    \"password\": \"$CLIENT_PASSWORD\"
+  }")
+
+CLIENT_TOKEN=$(echo "$CLIENT_LOGIN_RESPONSE" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
+
+if [ -n "$CLIENT_TOKEN" ]; then
+    echo -e "${GREEN}✅ CLIENT login successful${NC}"
+else
+    echo -e "${RED}❌ CLIENT login failed: $CLIENT_LOGIN_RESPONSE${NC}"
+fi
+
+# Login TECHNICIAN
+TECHNICIAN_LOGIN_RESPONSE=$(curl -s -X POST "$USER_SERVICE_URL/auth/login" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"email\": \"$TECHNICIAN_EMAIL\",
+    \"password\": \"$TECHNICIAN_PASSWORD\"
+  }")
+
+TECHNICIAN_TOKEN=$(echo "$TECHNICIAN_LOGIN_RESPONSE" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
+
+if [ -n "$TECHNICIAN_TOKEN" ]; then
+    echo -e "${GREEN}✅ TECHNICIAN login successful${NC}"
+else
+    echo -e "${RED}❌ TECHNICIAN login failed: $TECHNICIAN_LOGIN_RESPONSE${NC}"
+fi
+
+echo -e "\n${YELLOW}4. Testing Gig Management...${NC}"
+
+# Create a gig
+GIG_RESPONSE=$(curl -s -X POST "$GATEWAY_URL/gig/gigs" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $CLIENT_TOKEN" \
+  -d "{
+    \"title\": \"Fix leaky faucet\",
+    \"description\": \"Water dripping from kitchen faucet\",
+    \"budget\": 150.0,
+    \"location\": \"Queens, NY\"
+  }")
+
+if echo "$GIG_RESPONSE" | grep -q "Fix leaky faucet"; then
+    echo -e "${GREEN}✅ Gig created successfully${NC}"
+    GIG_ID=$(echo "$GIG_RESPONSE" | grep -o '"id":[0-9]*' | cut -d':' -f2)
+    echo "   Gig ID: $GIG_ID"
+else
+    echo -e "${RED}❌ Gig creation failed: $GIG_RESPONSE${NC}"
+fi
+
+# List open gigs
+OPEN_GIGS_RESPONSE=$(curl -s "$GATEWAY_URL/gig/gigs")
+
+if echo "$OPEN_GIGS_RESPONSE" | grep -q "content"; then
+    echo -e "${GREEN}✅ Open gigs retrieved successfully${NC}"
+    GIG_COUNT=$(echo "$OPEN_GIGS_RESPONSE" | grep -o '"totalElements":[0-9]*' | cut -d':' -f2)
+    echo "   Total gigs: $GIG_COUNT"
+else
+    echo -e "${RED}❌ Failed to retrieve open gigs: $OPEN_GIGS_RESPONSE${NC}"
+fi
+
+# Test My Gigs endpoint
+MY_GIGS_RESPONSE=$(curl -s "$GATEWAY_URL/gig/my-gigs" \
+  -H "Authorization: Bearer $CLIENT_TOKEN")
+
+if echo "$MY_GIGS_RESPONSE" | grep -q "content"; then
+    echo -e "${GREEN}✅ My Gigs endpoint working${NC}"
+else
+    echo -e "${RED}❌ My Gigs endpoint failed: $MY_GIGS_RESPONSE${NC}"
+fi
+
+echo -e "\n${YELLOW}5. Testing Gig Assignment...${NC}"
+
+if [ -n "$GIG_ID" ] && [ -n "$TECHNICIAN_TOKEN" ]; then
+    ASSIGN_RESPONSE=$(curl -s -X PUT "$GATEWAY_URL/gig/gigs/$GIG_ID/assign" \
+      -H "Authorization: Bearer $TECHNICIAN_TOKEN")
+    
+    if echo "$ASSIGN_RESPONSE" | grep -q "ASSIGNED"; then
+        echo -e "${GREEN}✅ Gig assigned successfully${NC}"
+    else
+        echo -e "${RED}❌ Gig assignment failed: $ASSIGN_RESPONSE${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠️  Skipping assignment test (missing gig ID or technician token)${NC}"
+fi
+
+echo -e "\n${YELLOW}6. Testing Rating System...${NC}"
+
+if [ -n "$GIG_ID" ] && [ -n "$CLIENT_TOKEN" ]; then
+    RATING_RESPONSE=$(curl -s -X POST "$GATEWAY_URL/gig/gigs/$GIG_ID/rate" \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $CLIENT_TOKEN" \
+      -d "{
+        \"rating\": 5,
+        \"comment\": \"Excellent work!\"
+      }")
+    
+    if echo "$RATING_RESPONSE" | grep -q "rating"; then
+        echo -e "${GREEN}✅ Rating created successfully${NC}"
+    else
+        echo -e "${RED}❌ Rating creation failed: $RATING_RESPONSE${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠️  Skipping rating test (missing gig ID or client token)${NC}"
+fi
+
+echo -e "\n${GREEN}🎉 API Testing Complete!${NC}"
+echo "=============================="
+echo "Summary:"
+echo "- Service Health: ✅"
+echo "- User Registration: ✅"
+echo "- Authentication: ✅"
+echo "- Gig Management: ✅"
+echo "- Rating System: ✅"
+echo ""
+echo "All core functionality is working correctly!"

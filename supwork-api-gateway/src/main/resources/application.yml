@@ -1,51 +1,201 @@
+# =============================================================================
+# SupWork API Gateway Configuration
+# =============================================================================
+# This configuration defines the API Gateway for the SupWork platform,
+# providing centralized routing, load balancing, and CORS handling.
+
 server:
   port: 8080
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
 
 spring:
   application:
     name: supwork-api-gateway
+  
+  # =============================================================================
+  # Spring Cloud Gateway Configuration
+  # =============================================================================
   cloud:
     gateway:
+      # Global CORS configuration for frontend integration
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: 
+              - "http://localhost:3000"      # Development frontend
+              - "https://supwork.com"        # Production frontend
+              - "https://www.supwork.com"    # Production frontend with www
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+      
+      # Default filters applied to all routes
       default-filters:
-        - RemoveRequestHeader=Cookie
-        - RemoveResponseHeader=X-Content-Type-Options
+        - RemoveRequestHeader=Cookie          # Remove cookies for security
+        - AddRequestHeader=X-Gateway-Source,supwork-api-gateway
+      
+      # Service discovery and load balancing
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      
+      # Route definitions for microservices
       routes:
+        # =============================================================================
+        # Authentication Service Route
+        # =============================================================================
+        - id: auth-service
+          uri: lb://user-service
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=0
+            - name: Retry
+              args:
+                retries: 3
+                methods: GET,POST
+                backoff:
+                  firstBackoff: 50ms
+                  maxBackoff: 500ms
+                  factor: 2
+                  basedOnPreviousValue: false
+        
+        # =============================================================================
+        # User Service Route
+        # =============================================================================
         - id: user-service
           uri: lb://user-service
           predicates:
             - Path=/user/**
           filters:
             - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: user-service-circuit-breaker
+                fallbackUri: forward:/fallback/user-service
         
+        # =============================================================================
+        # Gig Service Route
+        # =============================================================================
         - id: gig-service
           uri: lb://gig-service
           predicates:
             - Path=/gig/**
           filters:
             - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: gig-service-circuit-breaker
+                fallbackUri: forward:/fallback/gig-service
         
+        # =============================================================================
+        # Search Service Route
+        # =============================================================================
         - id: search-service
           uri: lb://search-service
           predicates:
             - Path=/search/**
           filters:
             - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: search-service-circuit-breaker
+                fallbackUri: forward:/fallback/search-service
 
+# =============================================================================
+# Eureka Service Discovery Configuration
+# =============================================================================
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+    registry-fetch-interval-seconds: 30
+    instance-info-replication-interval-seconds: 30
   instance:
     prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
+# =============================================================================
+# Logging Configuration
+# =============================================================================
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+    com.supwork.gateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# =============================================================================
+# Management and Monitoring Configuration
+# =============================================================================
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,gateway,circuitbreakers
+      base-path: /actuator
   endpoint:
     health:
       show-details: always
+      show-components: always
+    metrics:
+      enabled: true
+    gateway:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENVIRONMENT:development}
+
+# =============================================================================
+# Resilience4j Circuit Breaker Configuration
+# =============================================================================
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-service-circuit-breaker:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+      gig-service-circuit-breaker:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+      search-service-circuit-breaker:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+  retry:
+    instances:
+      auth-service-retry:
+        max-attempts: 3
+        wait-duration: 1s
+        exponential-backoff-multiplier: 2
+        exponential-backoff-max-duration: 10s
 

@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-@Component
+// Disabled: Gateway no longer validates JWT, services handle their own authentication
+// @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override

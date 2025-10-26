@@ -45,6 +45,11 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+logging:
+  level:
+    com.supwork.gig.service.UserClient: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+
 # Resilience4j Configuration
 resilience4j:
   circuitbreaker:

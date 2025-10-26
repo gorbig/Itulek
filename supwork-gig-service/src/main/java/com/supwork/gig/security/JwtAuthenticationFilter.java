@@ -33,11 +33,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         
+        log.info("🔍 Request: {} {}", request.getMethod(), request.getRequestURI());
+        
         String authHeader = request.getHeader("Authorization");
+        
+        // Log the auth header (first 30 chars to not expose full token)
+        log.info("📝 Auth header: {}", authHeader != null && authHeader.length() > 30 
+            ? authHeader.substring(0, 30) + "..." 
+            : authHeader);
         
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             try {
                 String token = authHeader.substring(7);
+                
+                // Log token format (first 20 chars)
+                String tokenPreview = token.length() > 20 ? token.substring(0, 20) + "..." : token;
+                log.debug("Token preview: {}", tokenPreview);
+                
+                // Check token format (should have 2 periods for JWT structure: header.payload.signature)
+                if (!token.contains(".")) {
+                    log.warn("Invalid JWT format: token does not contain '.' separator");
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                
+                // Split and check token parts
+                String[] parts = token.split("\\.");
+                if (parts.length != 3) {
+                    log.warn("Invalid JWT format: expected 3 parts, found {}", parts.length);
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                
                 Claims claims = Jwts.parserBuilder()
                         .setSigningKey(getSigningKey())
                         .build()
@@ -45,7 +74,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .getBody();
                 
                 String userId = claims.getSubject();
-                String role = claims.get("role", String.class);
+                // Try "roles" first (as used by user-service), fallback to "role"
+                String role = claims.get("roles", String.class);
+                if (role == null) {
+                    role = claims.get("role", String.class);
+                }
+                
+                log.info("✅ JWT validated successfully. UserId: {}, Role: {}", userId, role);
                 
                 if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     List<SimpleGrantedAuthority> authorities = List.of(
@@ -55,10 +90,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authToken = 
                             new UsernamePasswordAuthenticationToken(userId, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    
+                    log.info("✅ Authentication set for user: {}", userId);
                 }
             } catch (Exception e) {
-                log.error("JWT validation failed: {}", e.getMessage());
+                log.error("❌ JWT validation failed: {}", e.getMessage());
+                e.printStackTrace();
+                SecurityContextHolder.clearContext();
             }
+        } else {
+            log.warn("⚠️  No Authorization header or invalid format");
         }
         
         filterChain.doFilter(request, response);

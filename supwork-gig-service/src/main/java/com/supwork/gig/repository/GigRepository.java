@@ -17,4 +17,8 @@ public interface GigRepository extends JpaRepository<Gig, Long> {
     Page<Gig> findByStatus(GigStatus status, Pageable pageable);
     
     List<Gig> findByClientIdAndStatus(Long clientId, GigStatus status);
+    
+    Page<Gig> findByTechnicianId(Long technicianId, Pageable pageable);
+    
+    Page<Gig> findByClientId(Long clientId, Pageable pageable);
 }
