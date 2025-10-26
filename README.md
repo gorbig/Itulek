@@ -12,23 +12,11 @@
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
 
-[🚀 Live Demo](#-live-demo) • [⚡ Quick Start](docs/QUICK_START.md) • [🛠️ Installation](#-installation) • [📊 Metrics](docs/METRICS.md) • [🎯 Use Cases](docs/USE_CASES.md) • [🏆 Advantages](docs/COMPETITIVE_ADVANTAGES.md)
+[⚡ Quick Start](#-quick-start) • [🛠️ Installation](#-installation) • [📖 Documentation](#-documentation)
 
 </div>
 
 ---
-
-## 📸 Screenshots & Demo
-
-<div align="center">
-
-| Landing Page | Dashboard | Mobile View |
-|--------------|-----------|-------------|
-| ![Landing](docs/screenshots/landing.png) | ![Dashboard](docs/screenshots/dashboard.png) | ![Mobile](docs/screenshots/mobile.png) |
-
-*[View all screenshots](docs/SCREENSHOTS.md) • [API Examples](docs/API_EXAMPLES.md)*
-
-</div>
 
 ---
 
@@ -44,6 +32,82 @@
 - **📱 Mobile-First**: Responsive design that works perfectly on any device
 - **🌍 Global Ready**: Multi-language support and international payment processing
 - **📊 Real-Time Analytics**: Comprehensive dashboard for business insights
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+
+| Landing Page | Registration | Dashboard | Search | Profile |
+|--------------|--------------|-----------|--------|---------|
+| ![Landing Page](docs/screenshots/landing.png) | ![Registration](docs/screenshots/register.png) | ![Dashboard](docs/screenshots/dashboard.png) | ![Search](docs/screenshots/search.png) | ![Profile](docs/screenshots/profile.png) |
+
+*[View all screenshots](docs/SCREENSHOTS.md)*
+
+</div>
+
+---
+
+## ⚡ Quick Start
+
+### 🚀 Get Started in 5 Minutes
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/supwork.git
+cd supwork
+
+# 2. Start everything with Docker Compose
+docker-compose up -d
+
+# 3. Access the application
+open http://localhost:3000  # Frontend
+open http://localhost:8080  # API Gateway
+```
+
+### 🔐 Quick Authentication Test
+
+```bash
+# Register a client
+curl -X POST http://localhost:8080/user/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "client@example.com",
+    "password": "password123",
+    "role": "CLIENT"
+  }'
+
+# Login and get token
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "client@example.com",
+    "password": "password123"
+  }'
+```
+
+### 💼 Create Your First Gig
+
+```bash
+# Create a gig (replace YOUR_JWT_TOKEN with token from login)
+curl -X POST http://localhost:8080/gig/gigs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "title": "Fix leaky faucet",
+    "description": "Kitchen faucet needs repair",
+    "budget": 150.0,
+    "location": "New York, NY"
+  }'
+```
+
+### 📱 Access Points
+
+- **Frontend**: http://localhost:3000
+- **API Gateway**: http://localhost:8080
+- **Swagger UI**: http://localhost:8081/swagger-ui/index.html
+- **Eureka Dashboard**: http://localhost:8761
 
 ---
 
@@ -184,7 +248,7 @@ graph TB
 
 ---
 
-## 🚀 Quick Start
+## 🛠️ Installation
 
 ### Prerequisites
 - **Java 17+** - Latest LTS version
@@ -402,6 +466,20 @@ We welcome contributions from the community! Here's how you can help:
 - **🐦 Follow on Twitter** - Latest updates and news
 - **📺 YouTube Channel** - Tutorials and demos
 - **📝 Blog** - Technical articles and case studies
+
+---
+
+## 📖 Documentation
+
+### API Documentation
+- **User Service API**: http://localhost:8080/user/swagger-ui/index.html
+- **Gig Service API**: http://localhost:8080/gig/swagger-ui/index.html
+- **Search Service API**: http://localhost:8080/search/swagger-ui/index.html
+
+### Additional Resources
+- [🚀 Deployment Guide](docs/DEPLOYMENT.md)
+- [⚡ Quick Start Guide](docs/QUICK_START.md)
+- [🔧 Code Improvements](docs/CODE_IMPROVEMENTS.md)
 
 ---
 
