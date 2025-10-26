@@ -21,6 +21,40 @@ services:
       timeout: 5s
       retries: 5
 
+  # База данных MongoDB для Search Service
+  mongodb:
+    image: mongo:7.0
+    container_name: supwork-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: supworkdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - supwork-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis для кэширования
+  redis:
+    image: redis:7.2-alpine
+    container_name: supwork-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - supwork-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Eureka Server - Service Discovery
   eureka-server:
     build:
@@ -47,12 +81,19 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     networks:
       - supwork-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # User Service - Auth & User Management
   user-service:
@@ -63,8 +104,10 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - postgres
-      - eureka-server
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/supworkdb
       SPRING_DATASOURCE_USERNAME: postgres
@@ -73,6 +116,12 @@ services:
     networks:
       - supwork-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Gig Service - Order Management
   gig-service:
@@ -83,9 +132,12 @@ services:
     ports:
       - "8082:8082"
     depends_on:
-      - postgres
-      - eureka-server
-      - user-service
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/supworkdb
       SPRING_DATASOURCE_USERNAME: postgres
@@ -94,9 +146,51 @@ services:
     networks:
       - supwork-network
     restart: unless-stopped
+    # healthcheck:
+    #   test: ["CMD-SHELL", "netstat -an | grep :8082 | grep LISTEN || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
+
+  # Search Service - Search & Matching
+  search-service:
+    build:
+      context: ./supwork-search-service
+      dockerfile: Dockerfile
+    container_name: supwork-search-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      gig-service:
+        condition: service_started
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/supworkdb
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - supwork-network
+    restart: unless-stopped
+    # healthcheck:
+    #   test: ["CMD-SHELL", "netstat -an | grep :8083 | grep LISTEN || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
 
 volumes:
   postgres_data:
+  mongodb_data:
+  redis_data:
 
 networks:
   supwork-network:

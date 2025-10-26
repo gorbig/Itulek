@@ -26,10 +26,11 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/**", "/health").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/gigs").permitAll() // Allow GET /gigs without auth
                         .requestMatchers("/gigs/{id}").permitAll() // Allow GET /gigs/{id} without auth
+                        .requestMatchers("/gigs/open").permitAll() // Allow GET /gigs/open for search-service
                         .requestMatchers("/gigs/**").authenticated() // All other gig endpoints require auth
                         .anyRequest().authenticated()
                 )

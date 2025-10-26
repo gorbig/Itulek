@@ -20,6 +20,7 @@
         <module>supwork-api-gateway</module>
         <module>supwork-user-service</module>
         <module>supwork-gig-service</module>
+        <module>supwork-search-service</module>
     </modules>
     <url/>
     <licenses>

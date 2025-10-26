@@ -6,6 +6,9 @@ spring:
     name: supwork-api-gateway
   cloud:
     gateway:
+      default-filters:
+        - RemoveRequestHeader=Cookie
+        - RemoveResponseHeader=X-Content-Type-Options
       routes:
         - id: user-service
           uri: lb://user-service
