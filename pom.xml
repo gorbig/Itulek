@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.example</groupId>
@@ -19,6 +19,7 @@
         <module>supwork-eureka-server</module>
         <module>supwork-api-gateway</module>
         <module>supwork-user-service</module>
+        <module>supwork-gig-service</module>
     </modules>
     <url/>
     <licenses>
