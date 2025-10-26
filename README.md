@@ -37,15 +37,7 @@
 
 ## 📸 Screenshots
 
-<div align="center">
-
-| Landing Page | Registration | Dashboard | Search | Profile |
-|--------------|--------------|-----------|--------|---------|
-| ![Landing Page](docs/screenshots/landing.png) | ![Registration](docs/screenshots/register.png) | ![Dashboard](docs/screenshots/dashboard.png) | ![Search](docs/screenshots/search.png) | ![Profile](docs/screenshots/profile.png) |
-
 *[View all screenshots](docs/SCREENSHOTS.md)*
-
-</div>
 
 ---
 
@@ -457,14 +449,12 @@ We welcome contributions from the community! Here's how you can help:
 
 ### 🆘 Getting Help
 - **📖 Documentation** - Comprehensive guides and API docs
-- **💬 Discord Community** - Real-time chat with developers
-- **📧 Email Support** - support@supwork.com
+- **📧 Email Support** - ilyas.raise@gmail.com
 - **🐛 GitHub Issues** - Bug reports and feature requests
 
 ### 🌟 Community
 - **⭐ Star the Repository** - Show your support
-- **🐦 Follow on Twitter** - Latest updates and news
-- **📺 YouTube Channel** - Tutorials and demos
+- **💼 LinkedIn** - [Connect with the developer](https://www.linkedin.com/in/ilyas-rais/)
 - **📝 Blog** - Technical articles and case studies
 
 ---
@@ -508,6 +498,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Built with ❤️ by the SupWork Team**
 
-[🌐 Website](https://supwork.com) • [📧 Contact](mailto:contact@supwork.com) • [🐦 Twitter](https://twitter.com/supwork) • [💼 LinkedIn](https://linkedin.com/company/supwork)
+[📧 Contact](mailto:ilyas.raise@gmail.com) • [💼 LinkedIn](https://www.linkedin.com/in/ilyas-rais/)
 
 </div>
