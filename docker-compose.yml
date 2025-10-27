@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # База данных PostgreSQL
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: supwork-postgres
@@ -21,7 +21,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # База данных MongoDB для Search Service
+  # MongoDB Database for Search Service
   mongodb:
     image: mongo:7.0
     container_name: supwork-mongodb
@@ -39,7 +39,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis для кэширования
+  # Redis for Caching
   redis:
     image: redis:7.2-alpine
     container_name: supwork-redis
@@ -187,26 +187,6 @@ services:
     #   retries: 3
     #   start_period: 40s
 
-  # Gig Service - Order Management
-  gig-service:
-    build:
-      context: ./supwork-gig-service
-      dockerfile: Dockerfile
-    container_name: supwork-gig-service
-    ports:
-      - "8082:8082"
-    depends_on:
-      - postgres
-      - eureka-server
-      - user-service
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/supworkdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-    networks:
-      - supwork-network
-    restart: unless-stopped
 
 volumes:
   postgres_data:

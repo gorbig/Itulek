@@ -18,17 +18,17 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-@Tag(name = "User Management", description = "API для управления пользователями")
+@Tag(name = "User Management", description = "API for user management")
 public class UserController {
 
     private final UserService userService;
 
     @PostMapping("/register")
-    @Operation(summary = "Регистрация пользователя", description = "Создание нового пользователя в системе")
+    @Operation(summary = "User Registration", description = "Create a new user in the system")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Пользователь успешно создан"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные запроса"),
-            @ApiResponse(responseCode = "409", description = "Пользователь с таким email уже существует")
+            @ApiResponse(responseCode = "201", description = "User successfully created"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "409", description = "User with this email already exists")
     })
     public ResponseEntity<UserProfileDTO> register(@Valid @RequestBody UserDTO userDTO) {
         UserProfileDTO profile = userService.register(userDTO);
@@ -37,12 +37,12 @@ public class UserController {
 
     @GetMapping("/{id}/profile")
     @PreAuthorize("hasRole('CLIENT') or hasRole('TECHNICIAN')")
-    @Operation(summary = "Получение профиля пользователя", description = "Получение профиля пользователя по ID")
+    @Operation(summary = "Get User Profile", description = "Get user profile by ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Профиль пользователя получен"),
-            @ApiResponse(responseCode = "401", description = "Не авторизован"),
-            @ApiResponse(responseCode = "403", description = "Нет доступа"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+            @ApiResponse(responseCode = "200", description = "User profile retrieved"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "User not found")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserProfileDTO> getProfile(@PathVariable Long id) {
@@ -52,13 +52,13 @@ public class UserController {
 
     @PutMapping("/{id}/profile")
     @PreAuthorize("hasRole('CLIENT') or hasRole('TECHNICIAN')")
-    @Operation(summary = "Обновление профиля пользователя", description = "Обновление профиля пользователя")
+    @Operation(summary = "Update User Profile", description = "Update user profile")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Профиль успешно обновлен"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
-            @ApiResponse(responseCode = "401", description = "Не авторизован"),
-            @ApiResponse(responseCode = "403", description = "Нет доступа"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+            @ApiResponse(responseCode = "200", description = "Profile successfully updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "User not found")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserProfileDTO> updateProfile(@PathVariable Long id, @Valid @RequestBody UserProfileDTO updateRequest) {

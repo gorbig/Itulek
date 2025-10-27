@@ -17,7 +17,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("SupWork Gig Service API")
-                        .description("API для управления заказами (gigs) в системе SupWork")
+                        .description("API for managing gigs (orders) in SupWork system")
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("SupWork Development Team")
@@ -28,6 +28,6 @@ public class OpenApiConfig {
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("Введите JWT токен в формате: Bearer <token>")));
+                                .description("Enter JWT token in format: Bearer <token>")));
     }
 }

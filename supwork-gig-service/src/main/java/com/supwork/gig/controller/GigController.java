@@ -27,19 +27,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/gigs")
 @RequiredArgsConstructor
-@Tag(name = "Gig Management", description = "API для управления заказами (gigs)")
+@Tag(name = "Gig Management", description = "API for managing gigs (orders)")
 public class GigController {
     
     private final GigService gigService;
     
     @PostMapping
     @PreAuthorize("hasRole('CLIENT')")
-    @Operation(summary = "Создание заказа", description = "Создание нового заказа клиентом")
+    @Operation(summary = "Create Gig", description = "Create a new gig by client")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Заказ успешно создан"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные запроса"),
-            @ApiResponse(responseCode = "401", description = "Не авторизован"),
-            @ApiResponse(responseCode = "403", description = "Нет доступа")
+            @ApiResponse(responseCode = "201", description = "Gig successfully created"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<GigResponseDTO> createGig(@Valid @RequestBody CreateGigRequest request, Authentication authentication) {
@@ -53,10 +53,10 @@ public class GigController {
     }
     
     @GetMapping
-    @Operation(summary = "Получение списка открытых заказов", description = "Получение всех открытых заказов с пагинацией")
+    @Operation(summary = "Get Open Gigs", description = "Get all open gigs with pagination")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Список заказов получен"),
-            @ApiResponse(responseCode = "400", description = "Некорректные параметры пагинации")
+            @ApiResponse(responseCode = "200", description = "List of gigs retrieved"),
+            @ApiResponse(responseCode = "400", description = "Invalid pagination parameters")
     })
     public ResponseEntity<Page<GigResponseDTO>> getAllOpenGigs(Pageable pageable) {
         log.info("Fetching open gigs with pageable: {}", pageable);
@@ -66,11 +66,11 @@ public class GigController {
     
     @GetMapping("/my-gigs")
     @PreAuthorize("hasRole('CLIENT') or hasRole('TECHNICIAN')")
-    @Operation(summary = "Получение своих заказов", description = "Получение всех заказов пользователя (созданные или назначенные)")
+    @Operation(summary = "Get My Gigs", description = "Get all user's gigs (created or assigned)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Список заказов получен"),
-            @ApiResponse(responseCode = "401", description = "Не авторизован"),
-            @ApiResponse(responseCode = "403", description = "Нет доступа")
+            @ApiResponse(responseCode = "200", description = "List of gigs retrieved"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<GigResponseDTO>> getMyGigs(Pageable pageable, Authentication authentication) {
@@ -87,13 +87,13 @@ public class GigController {
     
     @PostMapping("/{id}/rate")
     @PreAuthorize("hasRole('CLIENT')")
-    @Operation(summary = "Оценка заказа", description = "Оценка выполненного заказа клиентом")
+    @Operation(summary = "Rate Gig", description = "Rate completed gig by client")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Оценка успешно создана"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
-            @ApiResponse(responseCode = "401", description = "Не авторизован"),
-            @ApiResponse(responseCode = "403", description = "Нет доступа"),
-            @ApiResponse(responseCode = "404", description = "Заказ не найден")
+            @ApiResponse(responseCode = "201", description = "Rating successfully created"),
+            @ApiResponse(responseCode = "400", description = "Invalid data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Gig not found")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<RatingDTO> rateGig(@PathVariable Long id, @Valid @RequestBody CreateRatingRequest request, Authentication authentication) {
@@ -104,11 +104,11 @@ public class GigController {
     
     @GetMapping("/ratings/my")
     @PreAuthorize("hasRole('CLIENT') or hasRole('TECHNICIAN')")
-    @Operation(summary = "Получение оценок пользователя", description = "Получение всех оценок пользователя")
+    @Operation(summary = "Get User Ratings", description = "Get all user's ratings")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Список оценок получен"),
-            @ApiResponse(responseCode = "401", description = "Не авторизован"),
-            @ApiResponse(responseCode = "403", description = "Нет доступа")
+            @ApiResponse(responseCode = "200", description = "List of ratings retrieved"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<List<RatingDTO>> getMyRatings(Authentication authentication) {
@@ -131,10 +131,10 @@ public class GigController {
     }
     
     @GetMapping("/{id}")
-    @Operation(summary = "Получение заказа по ID", description = "Получение информации о конкретном заказе")
+    @Operation(summary = "Get Gig by ID", description = "Get information about specific gig")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Заказ найден"),
-            @ApiResponse(responseCode = "404", description = "Заказ не найден")
+            @ApiResponse(responseCode = "200", description = "Gig found"),
+            @ApiResponse(responseCode = "404", description = "Gig not found")
     })
     public ResponseEntity<GigResponseDTO> getGigById(@PathVariable Long id) {
         log.info("Fetching gig with ID: {}", id);
@@ -144,13 +144,13 @@ public class GigController {
     
     @PutMapping("/{id}/assign")
     @PreAuthorize("hasRole('TECHNICIAN')")
-    @Operation(summary = "Назначение заказа мастеру", description = "Назначение заказа мастеру")
+    @Operation(summary = "Assign Gig to Technician", description = "Assign gig to technician")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Заказ успешно назначен"),
-            @ApiResponse(responseCode = "400", description = "Заказ недоступен для назначения"),
-            @ApiResponse(responseCode = "401", description = "Не авторизован"),
-            @ApiResponse(responseCode = "403", description = "Нет доступа"),
-            @ApiResponse(responseCode = "404", description = "Заказ не найден")
+            @ApiResponse(responseCode = "200", description = "Gig successfully assigned"),
+            @ApiResponse(responseCode = "400", description = "Gig not available for assignment"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Gig not found")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<GigResponseDTO> assignGig(@PathVariable Long id, Authentication authentication) {
@@ -165,12 +165,12 @@ public class GigController {
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('CLIENT')")
-    @Operation(summary = "Удаление заказа", description = "Удаление заказа владельцем")
+    @Operation(summary = "Delete Gig", description = "Delete gig by owner")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Заказ успешно удален"),
-            @ApiResponse(responseCode = "401", description = "Не авторизован"),
-            @ApiResponse(responseCode = "403", description = "Нет доступа"),
-            @ApiResponse(responseCode = "404", description = "Заказ не найден")
+            @ApiResponse(responseCode = "204", description = "Gig successfully deleted"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Gig not found")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteGig(@PathVariable Long id, Authentication authentication) {

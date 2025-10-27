@@ -16,17 +16,17 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "API для аутентификации пользователей")
+@Tag(name = "Authentication", description = "API for user authentication")
 public class AuthController {
 
     private final UserService userService;
 
     @PostMapping("/login")
-    @Operation(summary = "Вход пользователя", description = "Аутентификация пользователя по email и паролю")
+    @Operation(summary = "User Login", description = "Authenticate user by email and password")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешная аутентификация"),
-            @ApiResponse(responseCode = "401", description = "Неверные учетные данные"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные запроса")
+            @ApiResponse(responseCode = "200", description = "Successful authentication"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         JwtResponse response = userService.login(loginRequest);
@@ -34,11 +34,11 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "Обновление токена", description = "Обновление JWT токена с помощью refresh token")
+    @Operation(summary = "Refresh Token", description = "Refresh JWT token using refresh token")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Токен успешно обновлен"),
-            @ApiResponse(responseCode = "401", description = "Недействительный refresh token"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные запроса")
+            @ApiResponse(responseCode = "200", description = "Token successfully refreshed"),
+            @ApiResponse(responseCode = "401", description = "Invalid refresh token"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<JwtResponse> refresh(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
         JwtResponse response = userService.refreshToken(refreshTokenRequest);
