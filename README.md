@@ -1,4 +1,4 @@
-<img width="3743" height="2220" alt="SupWork Platform Screenshot" src="https://github.com/user-attachments/assets/67361ccf-c951-4d96-af90-ce19aee93de9" /># 🛠️ SupWork - Modern Service Marketplace Platform
+🛠️ SupWork - Modern Service Marketplace Platform
 
 <div align="center">
 
