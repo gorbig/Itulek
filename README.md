@@ -37,7 +37,7 @@
 
 ## 📸 Screenshots
 
-<img width="3743" height="2220" alt="SupWork Screenshots" src="https://github.com/user-attachments/assets/5db2c1a4-92e7-47ff-8bc9-d98c4d753be2" />
+<img width="3778" height="2047" alt="изображение" src="https://github.com/user-attachments/assets/22a6ff69-115a-4bc0-8afd-8e37181aee46" />
 
 
 ---
